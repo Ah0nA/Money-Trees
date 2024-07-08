@@ -30,7 +30,7 @@ bool connectToDatabase(SQLHANDLE &henv, SQLHANDLE &hdbc) {
         return false;
     }
 
-    SQLWCHAR connStr[] = L"DRIVER={ODBC Driver 18 for SQL Server};SERVER=moneytrees-sqlserver.database.windows.net;DATABASE=MoneyTreesDatabase;UID=Flavia;PWD=Darken&5h33p!;";
+    SQLWCHAR connStr[] = L"DRIVER={ODBC Driver 18 for SQL Server};SERVER=moneytrees-sqlserver.database.windows.net;DATABASE=MoneyTreesDatabase;UID=Flavia;PWD=Darken&5h33p !;";
 
     // Connect to the database
     ret = SQLConnect(hdbc, connStr, SQL_NTS, NULL, 0, NULL, 0);
