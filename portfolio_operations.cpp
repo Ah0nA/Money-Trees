@@ -46,7 +46,6 @@ bool connectToDatabase(SQLHANDLE &henv, SQLHANDLE &hdbc)
     return true;
 }
 
-//Function to insert new portfolio
 bool insertPortfoilioEntry(const Portfolio& portfolio){
     SQLHANDLE henv, hdbc, hstmt;
     SQLRETURN ret;
@@ -88,7 +87,17 @@ bool insertPortfoilioEntry(const Portfolio& portfolio){
         SQLDisconnect(hdbc);
         SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
         SQLFreeHandle(SQL_HANDLE_ENV, henv);
+        return false;
     }
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+    SQLDisconnect(hdbc);
+    SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
+    SQLFreeHandle(SQL_HANDLE_ENV, henv);
+    return true;
 
+
+}
+
+bool updatePortfolioEntry(const Portfolio &portfolio){
 
 }
