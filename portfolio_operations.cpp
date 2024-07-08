@@ -215,4 +215,62 @@ bool deletePortfolioEntry(const Portfolio &portfolio)
     return true;
 }
 
-//Function to get all portfolios for a user
+std::vector<Portfolio> getPortfoilioForUser(int user_id)
+{
+    SQLHANDLE henv, hdbc, hstmt;
+    SQLRETURN ret;
+    std::vector<Portfolio> portfolios;
+
+    if (!connectToDatabase(henv, hdbc))
+    {
+        return portfolios;
+    }
+
+    ret = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt);
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
+    {
+        std::cerr << "Error Allocating Handle" << std::endl;
+        SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+        SQLDisconnect(hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, henv);
+        return portfolios;
+    }
+    std::string sqlQuery = "SELECT user_id, company_id, shares_owned FROM portfolios WHERE user_id = ? ";
+    ret = SQLPrepare(hstmt, (SQLWCHAR *)sqlQuery.c_str(), SQL_NTS);
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
+    {
+        std::cerr << "Error Preparing SQL statement" << std::endl;
+        SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+        SQLDisconnect(hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, henv);
+        return portfolios;
+    }
+
+    ret = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, (SQLPOINTER)&user_id, 0, NULL);
+    ret = SQLExecute(hstmt);
+
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
+    {
+        std::cerr << "Error Executing SQL Statement" << std::endl;
+    }
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+    SQLDisconnect(hdbc);
+    SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
+    SQLFreeHandle(SQL_HANDLE_ENV, henv);
+    return portfolios;
+
+    Portfolio portfolio;
+    while (SQLFetch(hstmt) == SQL_SUCCESS){
+        SQLGetData(hstmt, 1, SQL_C_LONG, &portfolio.user_id, 0, NULL);
+        SQLGetData(hstmt, 2, SQL_C_LONG, &portfolio.company_id, 0, NULL);
+        SQLGetData(hstmt, 3, SQL_C_LONG, &portfolio.shares_owned, 0, NULL);
+        portfolios.push_back(portfolio);
+    }
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+    SQLDisconnect(hdbc);
+    SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
+    SQLFreeHandle(SQL_HANDLE_ENV, henv);
+    return portfolios;
+}
