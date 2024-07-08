@@ -49,7 +49,7 @@ SQLHANDLE connectToDatabase() {
     // Connect to the data source
     SQLWCHAR retConString[1024];
     switch (SQLDriverConnectW(sqlConnHandle, NULL, 
-        (SQLWCHAR*)L"DSN=MoneyTreesDSN;UID=Flavia;PWD=Darken&5h33p!;", 
+        (SQLWCHAR*)L"DSN=MoneyTreesDSN;UID=Flavia;PWD=Darken&5h33p !;", 
         SQL_NTS, retConString, 1024, NULL, SQL_DRIVER_NOPROMPT)) {
     case SQL_SUCCESS:
         std::wcout << L"Connection successful.\n";
