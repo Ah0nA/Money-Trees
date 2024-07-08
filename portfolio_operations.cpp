@@ -158,3 +158,61 @@ bool updatePortfolioEntry(const Portfolio &portfolio)
     SQLFreeHandle(SQL_HANDLE_ENV, henv);
     return true;
 }
+
+bool deletePortfolioEntry(const Portfolio &portfolio)
+{
+    SQLHANDLE henv, hdbc, hstmt;
+    SQLRETURN ret;
+
+    if (!connectToDatabase(henv, hdbc))
+    {
+        return false;
+    }
+
+    ret = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt);
+
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
+    {
+        std::cerr << "Error Allocating Statement Handle" << std::endl;
+        SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+        SQLDisconnect(hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, henv);
+        return false;
+    }
+
+    std::string sqlQuery = "DELETE FROM Portfolios WHERE user_id = ? AND company_id = ?";
+    ret = SQLPrepare(hstmt, (SQLWCHAR *)sqlQuery.c_str(), SQL_NTS);
+
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
+    {
+        std::cerr << "Error Preparing SQL Statement" << std::endl;
+        SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+        SQLDisconnect(hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, henv);
+        return false;
+    }
+
+    ret = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, (SQLPOINTER)&portfolio.user_id, 0, NULL);
+    ret = SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, (SQLPOINTER)&portfolio.company_id, 0, NULL);
+
+    ret = SQLExecute(hstmt);
+
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
+    {
+        std::cerr << "Error Executing SQL statement " << std::endl;
+        SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+        SQLDisconnect(hdbc);
+        SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, henv);
+        return false;
+    }
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+    SQLDisconnect(hdbc);
+    SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
+    SQLFreeHandle(SQL_HANDLE_ENV, henv);
+    return true;
+}
+
+//Function to get all portfolios for a user
