@@ -6,7 +6,8 @@
 struct Portfolio {
     int user_id;
     int company_id;
-    int shares_owned;
+    double shares_owned;
+    
 };
 
 bool insertPortfolioEntry(const Portfolio& portfolio);
