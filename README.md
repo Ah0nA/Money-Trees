@@ -1,10 +1,10 @@
-MONEY TREES
-Investment Portfolio Management with ESG Insights
+# MONEY TREES
+## Investment Portfolio Management with ESG Insights
 
-Introduction
+### Introduction
 MoneyTrees is a comprehensive investment portfolio management tool designed to help investors evaluate and manage their investments based on Environmental, Social, and Governance (ESG) criteria. This project aims to provide users with insights into the ESG performance of their portfolios and facilitate sustainable investment decisions.
 
-Features
+## Features
 ESG Data Management
 Central Database: Stores ESG scores of companies.
 API Integration: Updates scores from external APIs periodically.
@@ -29,12 +29,11 @@ User Management
 Account Features: Provides user account creation, login, and portfolio management functionalities.
 Reporting
 Summary Reports: Generates reports summarizing portfolio performance and ESG impacts.
-Getting Started
+### Getting Started
 Clone the Repository:
 
-bash
-Copy code
-git clone https://github.com/yourusername/MoneyTrees.git
+git clone https://github.com/Ah0nA/MoneyTrees.git
+
 Set Up the Database:
 
 Import the schema from schema.sql into your SQL database.
@@ -47,9 +46,9 @@ Deploy the provided Azure Functions for automation tasks.
 Run the Application:
 
 Launch the application and start managing your investment portfolio with ESG insights.
-Contributing
+## Contributing
 We welcome contributions! Please read our Contributing Guidelines for more information on how to contribute to this project.
 
-License
+## License
 This project is licensed under the MIT License. See the LICENSE file for details.
 
