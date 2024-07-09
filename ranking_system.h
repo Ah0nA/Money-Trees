@@ -1,20 +1,24 @@
 #pragma once
 
+#include "esg_impact_calculation.h"
+#include "portfolio_operations.h"
 #include <vector>
+#include <algorithm>
 #include <string>
 
 struct CompanyRanking
 {
     int company_id;
     float esg_score;
-    std::string comapany_name;
+    int rank;
 };
 
 struct UserPortfolioRanking{
     int user_id;
-    std::string user_name;
-    float portfolio_esg_score;
+    float overall_esg_score;
+    int rank;
 };
 
-std::vector<CompanyRanking> getCompanyRankings();
-std::vector<UserPortfolioRanking> getUserPortfolioRankings();
+std::vector<CompanyRanking> rankCompaniesByESGScore();
+std::vector<UserPortfolioRanking> rankUserPortfolios();
+int getUserPortfolioRank(int user_id);
