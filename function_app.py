@@ -1,9 +1,14 @@
 import datetime
 import logging
 import os
+import csv
+import io
 import pyodbc
 import http.client
 import urllib.parse
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import azure.functions as func
 
 app = func.FunctionApp()
@@ -139,21 +144,127 @@ def fetch_stock_price(company_name):
 
 @app.route(route="csv_upload", auth_level=func.AuthLevel.Anonymous)
 def csv_upload(req: func.HttpRequest) -> func.HttpResponse:
+   
+
     logging.info('Python HTTP trigger function processed a request.')
 
-    name = req.params.get('name')
-    if not name:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            name = req_body.get('name')
-
-    if name:
-        return func.HttpResponse(f"Hello, {name}. This HTTP triggered function executed successfully.")
-    else:
+    # Check if a file is included in the request
+    req_files = req.files.get('file')
+    if not req_files:
         return func.HttpResponse(
-             "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-             status_code=200
+            "Please upload a CSV file",
+            status_code=400
         )
+
+    try:
+        # Read the CSV file
+        csv_data = req_files[0].read().decode('utf-8')
+        csv_reader = csv.reader(io.StringIO(csv_data), delimiter=',')
+
+        # Connect to Azure SQL Database
+        conn_str = (
+            f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+            f"SERVER={os.environ['moneytrees-sqlserver.database.windows.net']};"
+            f"DATABASE={os.environ['MoneyTreesDatabase']};"
+            f"UID={os.environ['Flavia']};"
+            f"PWD={os.environ['Darken&5h33p !']}"
+        )
+
+        conn = pyodbc.connect(conn_str)
+        cursor = conn.cursor()
+
+        # Skip the header row
+        next(csv_reader, None)
+
+        # Process each row in the CSV
+        for row in csv_reader:
+            user_id = int(row[0])
+            company_id = int(row[1])
+            shares_owned = int(row[2])
+
+            # Insert into portfolios table
+            cursor.execute("""
+                INSERT INTO portfolios (user_id, company_id, shares_owned)
+                VALUES (?, ?, ?)
+            """, user_id, company_id, shares_owned)
+
+        conn.commit()
+        logging.info('CSV data uploaded and processed successfully.')
+
+        return func.HttpResponse("CSV data uploaded successfully", status_code=200)
+
+    except Exception as e:
+        logging.error(f"Error processing CSV upload: {e}")
+        return func.HttpResponse(
+            "Internal server error occurred",
+            status_code=500
+        )
+
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
+
+def send_email(smtp_server, smtp_port, smtp_user, smtp_password, subject, body, to_email):
+    msg = MIMEMultipart()
+    msg['From'] = smtp_user
+    msg['To'] = to_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'plain'))
+
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(smtp_user, smtp_password)
+        server.send_message(msg)
+        server.quit()
+        logging.info(f"Email sent to {to_email}")
+    except Exception as e:
+        logging.error(f"Failed to send email: {str(e)}")
+
+@app.route(route="email_notifications", auth_level=func.AuthLevel.ANONYMOUS)
+def email_notifications(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info('Python HTTP trigger function processed a request.')
+
+    try:
+        req_body = req.get_json()
+    except ValueError:
+        return func.HttpResponse(
+            "Invalid request body. Expected JSON.",
+            status_code=400
+        )
+
+    smtp_server = os.getenv('SMTP_SERVER')
+    smtp_port = os.getenv('SMTP_PORT')
+    smtp_user = os.getenv('SMTP_USER')
+    smtp_password = os.getenv('SMTP_PASSWORD')
+
+    if not all([smtp_server, smtp_port, smtp_user, smtp_password]):
+        return func.HttpResponse(
+            "Missing one or more required environment variables: SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD.",
+            status_code=500
+        )
+
+    user_email = req_body.get('email')
+    company = req_body.get('company')
+    old_score = req_body.get('old_score')
+    new_score = req_body.get('new_score')
+
+    if not all([user_email, company, old_score, new_score]):
+        return func.HttpResponse(
+            "Missing one or more required fields: email, company, old_score, new_score.",
+            status_code=400
+        )
+
+    subject = f"ESG Score Update for {company}"
+    body = f"The ESG score for {company} has changed from {old_score} to {new_score}."
+
+    send_email(smtp_server, smtp_port, smtp_user, smtp_password, subject, body, user_email)
+
+    return func.HttpResponse(
+        "Email notification sent successfully.",
+        status_code=200
+    )
